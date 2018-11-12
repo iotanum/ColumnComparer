@@ -19,7 +19,7 @@ class DirectoryTree:
         self.input_column_name = ""
         self.found_status = False
         self.row_status = False
-#        self.full_secondary = None
+#        self.full_secondary = None  # if doing specific tasks
 
     def file_tree(self, directory):
         paths = list()
@@ -75,6 +75,7 @@ class DirectoryTree:
         self.compare_main_with_secondaries(directory, df)
 
     def make_found_excel(self, directory):
+        # for specific tasks remove two first lines and last line
         df2 = pd.concat(self.not_found_list, ignore_index=True)
         print(len(df2), 'not found')
         df = pd.concat(self.found_rows_list, ignore_index=True)
@@ -106,18 +107,23 @@ class DirectoryTree:
 
 # For future, specific task
 #    def compare_main_with_secondaries(self, directory, sec_df):
-#        for main_idx, column_row in enumerate(self.main_excel_needed_column):
-#            column_row = str(column_row)
-#            for sec_idx, secondary_column_row in enumerate(sec_df[self.input_column_name]):
-#                secondary_column_row = str(secondary_column_row)
-#                if self.row_check(column_row, secondary_column_row) and self.input_column_name_check(column_row)\
-#                        and str(secondary_column_row) != 'nan':
-#                    which_file_row = self.full_secondary.iloc[[sec_idx], [4]]
-#                    new_df = self.main_excel_df.iloc[[main_idx]].assign(Vieta=which_file_row[4][sec_idx])
-#                    self.found_rows_list.append(new_df)
-#                    self.found_status = True
-#        if self.found_rows_list:
-#            self.make_found_excel(directory)
+#        try:
+#            for main_idx, column_row in enumerate(self.main_excel_needed_column):
+#                column_row = str(column_row)
+#                for sec_idx, secondary_column_row in enumerate(sec_df[self.input_column_name]):
+#                    secondary_column_row = str(secondary_column_row)
+#                    if self.row_check(column_row, secondary_column_row) and self.input_column_name_check(column_row)\
+#                            and str(secondary_column_row) != 'nan':
+#                        # number according to what is needed
+#                        which_file_row = self.full_secondary.iloc[[sec_idx], [1]]
+#                        # number according to which_file_row
+#                        new_df = self.main_excel_df.iloc[[main_idx]].assign(Vieta=which_file_row[1][sec_idx])
+#                        self.found_rows_list.append(new_df)
+#                        self.found_status = True
+#            if self.found_rows_list:
+#                self.make_found_excel(directory)
+#        except:
+#            print(traceback.format_exc())
 
     def row_check(self, main_row: str, secondary_row: str, ):
         return main_row.lower() in secondary_row.lower()  # either in or ==
