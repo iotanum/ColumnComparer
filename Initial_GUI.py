@@ -6,6 +6,7 @@ from excel_parse import Parsing
 from PyQt5.QtWidgets import (QWidget, QToolTip, QPushButton, QApplication, QMessageBox, QDesktopWidget,
                              QFileDialog, QLabel, QVBoxLayout, QHBoxLayout, QPlainTextEdit, QLineEdit)
 from PyQt5.QtGui import QFont
+import traceback
 
 
 class Example(QWidget):
@@ -97,7 +98,11 @@ class Example(QWidget):
         Parsing.__init__()
 
     def export_start(self):
-        Parsing.make_excel(self.results_f_path)
+        try:
+            Parsing.make_excel(self.results_f_path)
+        except:
+            print(traceback.format_exc())
+
         if Parsing.found_status:
             self.box.appendPlainText(f"Sėkmingai eksportuoti rezultatai, "
                                      f"dokumento pavadinimas -\n"

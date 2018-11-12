@@ -4,7 +4,6 @@ import time
 import pandas as pd
 import numpy as np
 from pathlib import Path
-import traceback
 
 
 class DirectoryTree:
