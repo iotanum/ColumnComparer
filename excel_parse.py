@@ -66,8 +66,7 @@ class DirectoryTree:
 
     def export_excel(self, directory, df, found=True):
         self.result_file_name = f'{"rezultatai" if found else "nerasti rezultatai"} ' + \
-                                                            str(time.strftime("%Y%m%d %H%M%S")) + ".xls"
-        print(self.result_file_name)
+                                                                str(time.strftime("%Y%m%d %H%M%S")) + ".xlsx"
         df.to_excel(directory + "/" + self.result_file_name)
 
     def make_excel(self, directory):
