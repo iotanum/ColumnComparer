@@ -55,11 +55,11 @@ class DirectoryTree:
 #                        maybe I'll need it later for specific tasks
 #                        self.full_secondary = xl
                         self.secondary_column_list.append(series)
-                        return f"\n     Stulpelis {self.column_alphabetic_value(column_num)} - '{column_row}'.\n"
+                        return self.column_alphabetic_value(column_num), column_row
                     else:
                         self.main_excel_df = xl
                         self.main_excel_needed_column = xl[column_num]
-                        return f"\n     Stulpelis {self.column_alphabetic_value(column_num)} - '{column_row}'.\n"
+                        return self.column_alphabetic_value(column_num), column_row
 
     def column_alphabetic_value(self, column_num):
         return string.ascii_uppercase[column_num]

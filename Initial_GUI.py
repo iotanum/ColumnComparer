@@ -120,7 +120,7 @@ class Example(QWidget):
             file_paths = Parsing.get_excel_list(self.folder_path)
             if "~$" not in str(file_paths):
                 if "" is not self.text_input_one.text() and "" is not self.text_input_two.text():
-                    self.find_and_parse_main_excel_file(self.file_path)
+                    self.find_and_parse_main_excel_file()
                     self.find_and_parse_secondary_excel_files(file_paths)
                     self.start_btn.hide()
                     self.export_btn.show()
@@ -137,24 +137,28 @@ class Example(QWidget):
         else:
             return True
 
+    def executor_and_columns(self, directories):
+        try:
+            start = time.time()
+            with ThreadPoolExecutor(max_workers=5) as p:
+                a = {p.submit(self.find_secondary_file_columns, directory): directory for directory in directories}
+                for future in as_completed(a):
+                    self.column_name_list.append(future.result())
+            end = time.time()
+            print(f"Search and parse took: {round(end - start, 2)}s")
+
+        except:
+            print(traceback.format_exc())
+
+        finally:
+            self.print_found()
+
     def find_and_parse_secondary_excel_files(self, directories):
-        counter = 1
         if directories:
-            input_column_name = self.input_column_names_parse(self.text_input_two.text())
+            self.input_column_name = self.input_column_names_parse(self.text_input_two.text())
             self.box.appendPlainText(f"Aplanke '{os.path.basename(self.folder_path)}' rasti šie dokumentai"
                                      f" ir jų stulpeliai:")
-            for file_path in directories:
-                if str(self.main_file) not in str(file_path) and "rezultatai" not in str(file_path):
-                    file = str(file_path).split("\\")[-1]
-                    text = Parsing.find_needed_column(Path(file_path), input_column_name)
-                    if text is not None:
-                        self.box.appendPlainText(f"{counter}. {file}, {text}")
-                        self.if_column_found_checks.append(True)
-                    else:
-                        self.box.appendPlainText(f"{counter}. {file},\n     Reikalingas stulpelis nerastas.\n")
-                        self.if_column_found_checks.append(False)
-                    counter += 1
-            self.box.verticalScrollBar().setValue(self.box.verticalScrollBar().maximum())
+            self.executor_and_columns(directories)
             if self.main_file_column_status:
                 self.box.appendPlainText("Jeigu viskas teisingai - spauskite "
                                          "'Ieškoti atitikimų ir eksportuoti' mygtuką.")
@@ -172,10 +176,34 @@ class Example(QWidget):
             self.box.appendPlainText(f"Aplanke '{os.path.basename(self.folder_path)}' nerasta excel failų.")
             self.export_btn.setEnabled(False)
 
-    def find_and_parse_main_excel_file(self, directory):
+    def print_found(self):
+        for idx, (file_name, column_info) in enumerate(self.column_name_list):
+            try:
+                column_info = ", ".join(column_info)
+            except TypeError:
+                column_info = "    Reikalingas stulpelis nerastas."
+            self.box.appendPlainText(f"{idx}. {file_name}:\n    Stulpelis {column_info}.\n")
+
+    def find_secondary_file_columns(self, directory):
+        if str(self.main_file) not in str(directory) and "rezultatai" not in str(directory):
+            file = str(directory).split("\\")[-1]
+
+            try:
+                column_abc, column_name = Parsing.find_needed_column(Path(directory), self.input_column_name)
+            except TypeError:
+                column_abc = None
+
+            if column_abc is not None:
+                self.if_column_found_checks.append(True)
+                return file, [column_abc, column_name]
+            else:
+                self.if_column_found_checks.append(False)
+                return file, None
+
+    def find_and_parse_main_excel_file(self):
         input_column_name = self.input_column_names_parse(self.text_input_one.text())
         self.box.appendPlainText(f"\nFaile '{self.main_file}' rastas šis stulpelis:")
-        text = Parsing.find_needed_column(Path(directory), input_column_name, main=True)
+        text = Parsing.find_needed_column(Path(self.file_path), input_column_name, main=True)
         if text is not None:
             self.box.appendPlainText(f"1. {text[6:]}")
             self.main_file_column_status = True
