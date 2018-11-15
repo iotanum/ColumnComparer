@@ -91,20 +91,20 @@ class DirectoryTree:
         self.export_excel(directory, df2, found=False)
 
     def compare_main_with_secondaries(self, directory):
-        print("Full file", len(self.main_excel_needed_column), "rows.")
+        print("Full file", len(self.main_excel_needed_column) - 1)  # minus header
         for main_idx, column_row in enumerate(self.main_excel_needed_column):
             column_row = str(column_row)
             self.row_status = False
             for sec_idx, secondary_column_row in enumerate(self.full_secondaries_df[self.input_column_name]):
                 secondary_column_row = str(secondary_column_row)
                 if self.row_check(column_row, secondary_column_row) and self.input_column_name_check(column_row)\
-                        and str(column_row) not in self.duplicates:
+                        and column_row not in self.duplicates and column_row != "nan":
                     list_of_files = self.find_multiple_file(column_row)
                     new_df = self.main_excel_df.iloc[[main_idx]].assign(Rasta_dokumente=list_of_files)
                     self.duplicates.add(str(column_row))
                     self.found_rows_list.append(new_df)
                     self.row_status = True
-            if not self.row_status and self.input_column_name_check(column_row):
+            if not self.row_status and self.input_column_name_check(column_row) and column_row != "nan":
                 not_found_row = self.main_excel_df.iloc[[main_idx]]
                 self.not_found_list.append(not_found_row)
         if self.found_rows_list:
