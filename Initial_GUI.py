@@ -24,6 +24,7 @@ class Example(QWidget):
         self.secondary_text_input = None
         self.main_file_column_status = None
         self.if_column_found_checks = []
+        self.column_name_list = []
 
     def initUI(self):
         self.text = ""
@@ -92,6 +93,7 @@ class Example(QWidget):
         self.secondary_text_input = None
         self.main_file_column_status = None
         self.if_column_found_checks = []
+        self.column_name_list = []
         self.export_btn.hide()
         self.start_btn.show()
         self.start_btn.setEnabled(True if self.start_btn.setEnabled(False) else False)

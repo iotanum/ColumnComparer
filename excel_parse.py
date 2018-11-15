@@ -19,6 +19,7 @@ class DirectoryTree:
         self.input_column_name = ""
         self.found_status = False
         self.row_status = False
+        self.full_secondaries_df = None
 #        self.full_secondary = None  # if doing specific tasks
 
     def file_tree(self, directory):
@@ -70,30 +71,29 @@ class DirectoryTree:
         df.to_excel(directory + "/" + self.result_file_name)
 
     def make_excel(self, directory):
-        df = pd.concat(self.secondary_column_list, ignore_index=True)
-        self.compare_main_with_secondaries(directory, df)
+        self.full_secondaries_df = pd.concat(self.secondary_column_list, ignore_index=True)
+        self.compare_main_with_secondaries(directory)
 
     def make_found_excel(self, directory):
         # for specific tasks remove two first lines and last line
         df2 = pd.concat(self.not_found_list, ignore_index=True)
-        print(len(df2), 'not found')
+        print("Didn't find:", len(df2))
         df = pd.concat(self.found_rows_list, ignore_index=True)
-        print(len(df), 'found')
+        print("Found:", len(df))
         self.export_excel(directory, df)
         self.export_excel(directory, df2, found=False)
 
-    def compare_main_with_secondaries(self, directory, sec_df):
-        print(len(self.main_excel_needed_column), 'full file')
+    def compare_main_with_secondaries(self, directory):
+        print("Full file", len(self.main_excel_needed_column), "rows.")
         for main_idx, column_row in enumerate(self.main_excel_needed_column):
             column_row = str(column_row)
             self.row_status = False
-            for sec_idx, secondary_column_row in enumerate(sec_df[self.input_column_name]):
+            for sec_idx, secondary_column_row in enumerate(self.full_secondaries_df[self.input_column_name]):
                 secondary_column_row = str(secondary_column_row)
                 if self.row_check(column_row, secondary_column_row) and self.input_column_name_check(column_row)\
                         and str(column_row) not in self.duplicates:
-                    which_file_row = sec_df.iloc[[sec_idx], [1]]
-                    which_file_row = which_file_row['file'][sec_idx]
-                    new_df = self.main_excel_df.iloc[[main_idx]].assign(Rasta_dokumente=which_file_row)
+                    list_of_files = self.find_multiple_file(column_row)
+                    new_df = self.main_excel_df.iloc[[main_idx]].assign(Rasta_dokumente=list_of_files)
                     self.duplicates.add(str(column_row))
                     self.found_rows_list.append(new_df)
                     self.row_status = True
@@ -103,6 +103,17 @@ class DirectoryTree:
         if self.found_rows_list:
             self.found_status = True
             self.make_found_excel(directory)
+
+    def find_multiple_file(self, column_row):
+        list_of_files = set()  # referred as a list of files that has the needed row
+        for idx, row in enumerate(self.full_secondaries_df[self.input_column_name]):
+            row = str(row)
+            if self.row_check(column_row, row):
+                which_file_row = self.full_secondaries_df.iloc[[idx], [1]]
+                which_file_row = which_file_row['file'][idx]
+                list_of_files.add(which_file_row)
+            continue
+        return ",\n".join(list_of_files)
 
 # For future, specific task
 #    def compare_main_with_secondaries(self, directory, sec_df):
