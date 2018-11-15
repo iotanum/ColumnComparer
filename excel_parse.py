@@ -122,7 +122,7 @@ class DirectoryTree:
                 which_file_row = which_file_row['file'][idx]
                 list_of_files.add(which_file_row)
             continue
-        return ",\n".join(list_of_files)
+        return ",\n".join([str(item) for item in list_of_files])
 
 # For future, specific task
 #    def compare_main_with_secondaries(self, directory, sec_df):
