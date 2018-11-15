@@ -20,6 +20,7 @@ class DirectoryTree:
         self.found_status = False
         self.row_status = False
         self.full_secondaries_df = None
+        self.main_file_header = None
 #        self.full_secondary = None  # if doing specific tasks
 
     def file_tree(self, directory):
@@ -46,7 +47,7 @@ class DirectoryTree:
         file_name = os.path.basename(file_path)
         self.input_column_name = " ".join(column_name)
         for column_num in xl:
-            for column_row in xl[column_num]:
+            for idx, column_row in enumerate(xl[column_num]):
                 if all(x.lower() in str(column_row).lower() for x in column_name):
                     df = pd.DataFrame(xl[column_num].dropna())  # specific task - delete dropna()
                     df.columns = [self.input_column_name]
@@ -59,6 +60,8 @@ class DirectoryTree:
                         return self.column_alphabetic_value(column_num), column_row
                     else:
                         self.main_excel_df = xl
+                        self.main_file_header = list(xl.iloc[[idx]].values[0])
+                        self.main_file_header.append("Rasta dokumente/dokumentuose")
                         self.main_excel_needed_column = xl[column_num]
                         return self.column_alphabetic_value(column_num), column_row
 
@@ -75,11 +78,15 @@ class DirectoryTree:
         self.compare_main_with_secondaries(directory)
 
     def make_found_excel(self, directory):
-        # for specific tasks remove two first lines and last line
-        df2 = pd.concat(self.not_found_list, ignore_index=True)
-        print("Didn't find:", len(df2))
+        # for specific tasks remove 3rd and 4th, and last line
         df = pd.concat(self.found_rows_list, ignore_index=True)
+        df.index += 1
+        df.columns = self.main_file_header
         print("Found:", len(df))
+        df2 = pd.concat(self.not_found_list, ignore_index=True)
+        df2.columns = self.main_file_header[:-1]
+        df2.index += 1
+        print("Didn't find:", len(df2))
         self.export_excel(directory, df)
         self.export_excel(directory, df2, found=False)
 
