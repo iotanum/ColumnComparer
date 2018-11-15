@@ -7,6 +7,8 @@ from PyQt5.QtWidgets import (QWidget, QToolTip, QPushButton, QApplication, QMess
                              QFileDialog, QLabel, QVBoxLayout, QHBoxLayout, QPlainTextEdit, QLineEdit)
 from PyQt5.QtGui import QFont
 import traceback
+from concurrent.futures import *
+import time
 
 
 class Example(QWidget):
