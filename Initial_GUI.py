@@ -181,7 +181,7 @@ class Example(QWidget):
             self.export_btn.setEnabled(False)
 
     def print_found(self):
-        for idx, (file_name, column_info) in enumerate(self.column_name_list):
+        for idx, (file_name, column_info) in enumerate(self.column_name_list, 1):
             try:
                 column_info = ", ".join(column_info)
             except TypeError:
@@ -207,9 +207,13 @@ class Example(QWidget):
     def find_and_parse_main_excel_file(self):
         input_column_name = self.input_column_names_parse(self.text_input_one.text())
         self.box.appendPlainText(f"\nFaile '{self.main_file}' rastas šis stulpelis:")
-        text = Parsing.find_needed_column(Path(self.file_path), input_column_name, main=True)
-        if text is not None:
-            self.box.appendPlainText(f"1. {text[6:]}")
+        try:
+            column_abc, column_header = Parsing.find_needed_column(Path(self.file_path), input_column_name, main=True)
+        except TypeError:
+            column_abc = None
+
+        if column_abc is not None:
+            self.box.appendPlainText(f"1. Stulpelis {column_abc}, {column_header}\n")
             self.main_file_column_status = True
         else:
             self.box.appendPlainText(f"1. Reikalingas stulpelis nerastas.\n")
