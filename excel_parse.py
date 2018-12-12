@@ -4,6 +4,7 @@ import time
 import pandas as pd
 import numpy as np
 from pathlib import Path
+import traceback
 
 
 class DirectoryTree:
@@ -21,7 +22,8 @@ class DirectoryTree:
         self.row_status = False
         self.full_secondaries_df = None
         self.main_file_header = None
-#        self.full_secondary = None  # if doing specific tasks
+        self.full_secondary = None  # if doing specific tasks
+        self.full_sec_hashtable = {}
 
     def file_tree(self, directory):
         paths = list()
@@ -49,13 +51,14 @@ class DirectoryTree:
         for column_num in xl:
             for idx, column_row in enumerate(xl[column_num]):
                 if all(x.lower() in str(column_row).lower() for x in column_name):
-                    df = pd.DataFrame(xl[column_num].dropna())  # specific task - delete dropna()
+                    df = pd.DataFrame(xl[column_num])  # specific task - delete dropna()
                     df.columns = [self.input_column_name]
                     if not main:
                         series = df.assign(file=pd.Series([file_name for _ in
                                                            range(len(df[self.input_column_name]) + 50)]))
-#                        maybe I'll need it later for specific tasks
-#                        self.full_secondary = xl
+#                       maybe I'll need it later for specific tasks
+                        self.full_secondary = xl
+                        self.secondary_to_hashtable(xl)
                         self.secondary_column_list.append(series)
                         return self.column_alphabetic_value(column_num), column_row
                     else:
@@ -64,6 +67,15 @@ class DirectoryTree:
                         self.main_file_header.append("Rasta dokumente/dokumentuose")
                         self.main_excel_needed_column = xl[column_num]
                         return self.column_alphabetic_value(column_num), column_row
+
+    def secondary_to_hashtable(self, full_secondary):
+        for value in full_secondary.values:
+            try:
+                value = str(value)
+                # nums according to needs
+                self.full_sec_hashtable[value[9]] = [value[3], value[4]]
+            except:
+                print(traceback.format_exc())
 
     def column_alphabetic_value(self, column_num):
         return string.ascii_uppercase[column_num]
@@ -75,7 +87,7 @@ class DirectoryTree:
 
     def make_excel(self, directory):
         self.full_secondaries_df = pd.concat(self.secondary_column_list, ignore_index=True)
-        self.compare_main_with_secondaries(directory)
+        self.compare_main_with_secondaries(directory, self.full_secondary)  # specific task, full secondary
 
     def make_found_excel(self, directory):
         # for specific tasks remove 3rd and 4th, and last line
@@ -90,28 +102,28 @@ class DirectoryTree:
         self.export_excel(directory, df)
         self.export_excel(directory, df2, found=False)
 
-    def compare_main_with_secondaries(self, directory):
-        print("Full file", len(self.main_excel_needed_column) - 1)  # minus header
-        for main_idx, column_row in enumerate(self.main_excel_needed_column):
-            column_row = str(column_row)
-            self.row_status = False
-            for sec_idx, secondary_column_row in enumerate(self.full_secondaries_df[self.input_column_name]):
-                secondary_column_row = str(secondary_column_row)
-                if self.row_check(column_row, secondary_column_row) and self.input_column_name_check(column_row)\
-                        and column_row not in self.duplicates and column_row != "nan"\
-                        and column_row not in self.main_file_header:
-                    list_of_files = self.find_multiple_file(column_row)
-                    new_df = self.main_excel_df.iloc[[main_idx]].assign(Rasta_dokumente=list_of_files)
-                    self.duplicates.add(str(column_row))
-                    self.found_rows_list.append(new_df)
-                    self.row_status = True
-            if not self.row_status and self.input_column_name_check(column_row) and column_row != "nan"\
-                    and column_row not in self.main_file_header:
-                not_found_row = self.main_excel_df.iloc[[main_idx]]
-                self.not_found_list.append(not_found_row)
-        if self.found_rows_list:
-            self.found_status = True
-            self.make_found_excel(directory)
+#    def compare_main_with_secondaries(self, directory):
+#        print("Full file", len(self.main_excel_needed_column) - 1)  # minus header
+#        for main_idx, column_row in enumerate(self.main_excel_needed_column):
+#            column_row = str(column_row)
+#            self.row_status = False
+#            for sec_idx, secondary_column_row in enumerate(self.full_secondaries_df[self.input_column_name]):
+#                secondary_column_row = str(secondary_column_row)
+#                if self.row_check(column_row, secondary_column_row) and self.input_column_name_check(column_row)\
+#                        and column_row not in self.duplicates and column_row != "nan"\
+#                        and column_row not in self.main_file_header:
+#                    list_of_files = self.find_multiple_file(column_row)
+#                    new_df = self.main_excel_df.iloc[[main_idx]].assign(Rasta_dokumente=list_of_files)
+#                    self.duplicates.add(str(column_row))
+#                    self.found_rows_list.append(new_df)
+#                    self.row_status = True
+#            if not self.row_status and self.input_column_name_check(column_row) and column_row != "nan"\
+#                    and column_row not in self.main_file_header:
+#                not_found_row = self.main_excel_df.iloc[[main_idx]]
+#                self.not_found_list.append(not_found_row)
+#        if self.found_rows_list:
+#            self.found_status = True
+#            self.make_found_excel(directory)
 
     def find_multiple_file(self, column_row):
         list_of_files = set()  # referred as a list of files that has the needed row
@@ -124,25 +136,41 @@ class DirectoryTree:
             continue
         return ",\n".join([str(item) for item in list_of_files])
 
-# For future, specific task
-#    def compare_main_with_secondaries(self, directory, sec_df):
+#    def compare_main_with_secondaries(self, directory, full_secondary):
 #        try:
 #            for main_idx, column_row in enumerate(self.main_excel_needed_column):
+#                print(column_row)
 #                column_row = str(column_row)
-#                for sec_idx, secondary_column_row in enumerate(sec_df[self.input_column_name]):
-#                    secondary_column_row = str(secondary_column_row)
-#                    if self.row_check(column_row, secondary_column_row) and self.input_column_name_check(column_row)\
-#                            and str(secondary_column_row) != 'nan':
-#                        # number according to what is needed
-#                        which_file_row = self.full_secondary.iloc[[sec_idx], [1]]
-#                        # number according to which_file_row
-#                        new_df = self.main_excel_df.iloc[[main_idx]].assign(Vieta=which_file_row[1][sec_idx])
-#                        self.found_rows_list.append(new_df)
-#                        self.found_status = True
-#            if self.found_rows_list:
-#                self.make_found_excel(directory)
+#                if column_row in self.full_sec_hashtable.keys():
+#                    print(self.full_sec_hashtable[column_row])
 #        except:
 #            print(traceback.format_exc())
+#
+
+# For future, specific task
+    def compare_main_with_secondaries(self, directory, sec_df):
+        try:
+            for main_idx, column_row in enumerate(self.main_excel_needed_column):
+                column_row = str(column_row)
+                for sec_idx, secondary_column_row in enumerate(sec_df[9]):  # kurio stulpelio ieskoma
+                    secondary_column_row = str(secondary_column_row)
+                    if self.row_check(column_row, secondary_column_row) and self.input_column_name_check(column_row)\
+                            and str(secondary_column_row) != 'nan':
+                        # number according to what is needed
+                        which_file_row = self.full_secondary.iloc[[sec_idx], [1]]
+                        which_file_row2 = self.full_secondary.iloc[[sec_idx], [3]]
+                        which_file_row3 = self.full_secondary.iloc[[sec_idx], [4]]
+                        # number according to which_file_row
+                        new_df = self.main_excel_df.iloc[[main_idx]].assign(Vieta=which_file_row[1][sec_idx])
+                        # apacioje numeris pagal which file row
+                        new_df = self.main_excel_df.iloc[[main_idx]].assign(Dez=which_file_row2[3][sec_idx])
+                        new_df = self.main_excel_df.iloc[[main_idx]].assign(Byl=which_file_row3[4][sec_idx])
+                        self.found_rows_list.append(new_df)
+                        self.found_status = True
+            if self.found_rows_list:
+                self.make_found_excel(directory)
+        except:
+            print(traceback.format_exc())
 
     def row_check(self, main_row: str, secondary_row: str, ):
         return main_row.lower() in secondary_row.lower()  # either in or ==

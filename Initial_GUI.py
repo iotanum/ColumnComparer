@@ -9,6 +9,7 @@ from PyQt5.QtGui import QFont
 import traceback
 from concurrent.futures import *
 import time
+import xlrd
 
 
 class Example(QWidget):
@@ -147,15 +148,20 @@ class Example(QWidget):
             with ThreadPoolExecutor(max_workers=5) as p:
                 a = {p.submit(self.find_secondary_file_columns, directory): directory for directory in directories}
                 for future in as_completed(a):
-                    self.column_name_list.append(future.result())
+                    try:
+                        self.column_name_list.append(future.result())
+
+                    except xlrd.biffh.XLRDError:
+                        print(traceback.format_exc())
+                        continue
             end = time.time()
             print(f"Search and parse took: {round(end - start, 2)}s")
 
         except:
             print(traceback.format_exc())
 
-        finally:
-            self.print_found()
+#        finally:
+#            self.print_found()
 
     def find_and_parse_secondary_excel_files(self, directories):
         if directories:
